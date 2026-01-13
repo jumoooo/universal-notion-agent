@@ -9,6 +9,7 @@
 3. [페이지 생성 안정적인 방법](#페이지-생성-안정적인-방법)
 4. [파일 내용 업로드](#파일-내용-업로드)
 5. [검증 패턴](#검증-패턴)
+6. [Claude CLI 전용 패턴 (macOS)](#claude-cli-전용-패턴-macos) ⭐ NEW
 
 ---
 
@@ -216,13 +217,82 @@ const finalCheck = await browser_evaluate(() => {
 
 ---
 
+## 6️⃣ Claude CLI 전용 패턴 (macOS)
+
+### ⚡ 핵심: pbcopy + Meta+v
+
+**가장 안정적인 업로드 방법** (청크 분할 없이 한 번에!)
+
+```bash
+# 1. Bash로 시스템 클립보드에 복사
+pbcopy < /path/to/file.md
+```
+
+```javascript
+// 2. browser_run_code로 붙여넣기
+async (page) => {
+  await page.keyboard.press('Meta+v');
+  await page.waitForTimeout(10000); // 대용량은 충분히 대기
+  return { success: true };
+}
+```
+
+### ✅ Chrome 프로필 설정 (.mcp.json)
+
+```json
+{
+  "mcpServers": {
+    "playwright": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@playwright/mcp",
+        "--browser=chromium",
+        "--user-data-dir=/Users/[사용자명]/Library/Application Support/Google/Chrome/NotionAgent"
+      ]
+    }
+  }
+}
+```
+
+### ✅ 제목 복구 (붙여넣기 후)
+
+```javascript
+// 붙여넣기 후 제목이 "새 페이지"로 바뀌면 즉시 복구
+() => {
+  const titleElement = document.querySelector('h1[contenteditable="true"]');
+  titleElement.focus();
+  const range = document.createRange();
+  range.selectNodeContents(titleElement);
+  const selection = window.getSelection();
+  selection.removeAllRanges();
+  selection.addRange(range);
+  document.execCommand('insertText', false, '원하는 제목');
+  return { success: true };
+}
+```
+
+### ❌ Claude CLI에서 피해야 할 것
+
+1. **청크 분할 업로드** → 순서 역전, 중복 발생
+2. **기존 내용 삭제 시도** → Notion Undo가 복원
+3. **browser_evaluate에 element/ref 파라미터** → 제목 오염
+
+### 📖 Claude CLI 상세 가이드
+
+- **설정 가이드**: `Platform_Guides/Claude/Claude_설정_가이드.md`
+- **성공 예제**: `Platform_Guides/Claude/Claude_성공_예제.md`
+
+---
+
 ## 📚 자세한 내용
 
 - **전체 가이드**: `07_브라우저_자동화_함정.md`
 - **문제 해결**: `TROUBLESHOOTING.md`
 - **에러 처리**: `03_에러_처리.md`
+- **Claude CLI 가이드**: `Platform_Guides/Claude/Claude_설정_가이드.md`
 
 ---
 
-**버전**: 2.1.2  
-**업데이트**: 2026-01-13
+**버전**: 2.1.3
+**업데이트**: 2026-01-13 (Claude CLI 섹션 추가)
