@@ -1,0 +1,44 @@
+# Chrome Profile (로컬 개인 데이터)
+chrome_profile/
+*.crx
+
+# 개인 설정 파일
+.env
+.env.local
+mcp_settings.json
+
+# 백업 및 기록 파일
+*_Backup/
+*_backup/
+*_Archive/
+
+# OS 파일
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDE 설정
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# 로그 파일
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+logs/
+
+# 임시 파일
+*.tmp
+*.temp
+~*
+
+# Node modules (MCP 서버 로컬 설치 시)
+node_modules/
+
+# 개인 가이드 (공개하지 않을 내용)
+Notion_Agent_Guides/
+Notion_Agent_Guides_Backup/
