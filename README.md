@@ -14,6 +14,43 @@
 
 Universal Notion Agent는 마크다운 파일을 Notion 페이지로 자동 업로드하는 AI Agent 시스템입니다. MCP (Model Context Protocol)를 기반으로 하여 여러 AI 플랫폼에서 동일하게 작동합니다.
 
+## 💡 프로젝트 배경
+
+### 왜 만들게 되었나요?
+
+1. **문제 발견** 🔍
+   - Cursor에서 Notion MCP로 글을 올릴 때 **간헐적으로 오류 발생**
+   - API 호출은 성공하지만 실제로는 엉뚱한 위치에 생성되는 문제
+   - 파일이 크면 업로드 중 연결 끊김
+
+2. **첫 번째 해결 시도** 📝
+   - 안정성을 추가한 프롬프트 작성
+   - 잘 올라가긴 하는데... 새로운 문제 발견
+
+3. **프롬프트의 폭발적 성장** 📈
+   - 다른 오류 해결 추가
+   - 안정성 강화 추가
+   - 사용자 편의성 개선 추가
+   - **결과: 프롬프트가 1,700줄 돌파!** 😱
+
+4. **에이전트화 결정** 🤖
+   - "이럴 거면 에이전트로 만들고 파일로 분리하자!"
+   - Core Guides로 로직 분리
+   - 독립 실행 가능한 Agent 시스템 구축
+
+5. **범용화 확장** 🌐
+   - "다른 AI IDE에서도 사용할 수 있으면 좋겠다"
+   - Claude CLI, Antigravity 지원 추가
+   - MCP 기반으로 표준화
+
+### 핵심 철학
+
+> **"가장 낮은 수준의 LLM에서도 안정적으로 작동해야 한다"**
+
+- **Cursor Pro Auto 기준으로 프롬프트 작성**
+  - 가장 수준이 낮은 LLM 기반
+  - 여기서 잘 돌아가면 더 높은 수준의 LLM은 당연히 잘 돌아감
+  
 ### 주요 기능
 
 - ✅ **마크다운 → Notion 페이지 자동 변환**
@@ -47,7 +84,7 @@ Universal Notion Agent는 마크다운 파일을 Notion 페이지로 자동 업�
 
 ### 2. 프로젝트에 포함
 
-**`Universal_Notion_Agent/` 폴더를 원하는 프로젝트에 복사**:
+**`Universal_Notion_Agent/` 폴더만 원하는 마크다운이 있는 위치로 이동**:
 
 ```bash
 # 예시: 프로젝트 루트에 복사
@@ -56,6 +93,11 @@ cp -r Universal_Notion_Agent /path/to/your/project/
 # 또는 Git Submodule로 추가
 git submodule add https://github.com/YOUR_USERNAME/Universal-Notion-Agent.git Universal_Notion_Agent
 ```
+
+**💡 배치 팁**:
+- 전역 위치에 두어도 상관없음
+- AI가 `@Universal_Notion_Agent/` 로 호출만 가능하면 어디든 OK
+- 독립적으로 실행되므로 다른 파일과 격리됨
 
 ### 3. MCP 서버 설정
 
@@ -67,22 +109,28 @@ git submodule add https://github.com/YOUR_USERNAME/Universal-Notion-Agent.git Un
 
 ### 4. 사용 방법
 
+**✨ 핵심: AI에게 모든 것을 맡기세요!**
+
 #### Step 1: Agent 시작 (가이드 강제 준수 모드)
 
-**AI CLI에 다음 프롬프트 전달**:
+**AI CLI에 다음 프롬프트만 전달**:
 
 ```
 @Universal_Notion_Agent/ 시작
 ```
 
-AI Agent가 자동으로:
+AI Agent가 **독립적으로 자동 실행**:
 
 - ✅ **모든 Core_Guides 읽기 및 강제 준수 모드 활성화**
-- ✅ 현재 환경 및 MCP 서버 연결 상태 확인
-- ✅ 미완료 셋업 안내 또는 준비 완료 보고
+- ✅ **셋업 검진**: 현재 환경 및 MCP 서버 연결 상태 확인
+- ✅ **셋업 안내**: 미완료 항목이 있으면 어떤 부분을 설정해야 하는지 자동 안내
+- ✅ **준비 완료 보고**: 모든 준비가 완료되면 바로 사용 가능 상태 알림
 - ✅ 사용 예시 프롬프트 제공
 
-**🔴 중요**: 시작 명령어를 입력하면 AI Agent는 모든 가이드를 자동으로 읽고 **강제로 준수**합니다.
+**🔴 중요**: 
+- 다른 셋업 전에 **무조건 먼저** `@Universal_Notion_Agent/ 시작` 실행
+- 이 README 읽고 뭐 하기 전에 AI에게 물어보세요
+- **셋업 검진, 셋업, 실행 전부 AI에게 맡기면 됩니다**
 
 #### Step 2: 작업 실행
 
@@ -230,9 +278,32 @@ Notion에 업로드해줘
 
 ---
 
+## 🎓 개발 철학 & 참고사항
+
+### LLM 수준 기반 설계
+
+이 프로젝트는 **Cursor Pro Auto (낮은 수준의 LLM)** 기준으로 프롬프트를 작성했습니다.
+
+**이유**:
+- ✅ 낮은 수준에서 잘 돌아가면 → 높은 수준에서는 **높은 확률로** 잘 돌아감
+- ✅ 최소 사양 보장으로 **범용성 확보**
+- ✅ 더 강력한 LLM에서는 **더욱 안정적**으로 작동
+
+### Agent 학습 효과
+
+**한 번 성공하면 계속 성공합니다!**
+
+- 🧠 Agent가 실패 사례를 학습
+- 📈 같은 채팅에서는 이후 업로드 시 **높은 안정성** 유지
+- 🔄 재시도할수록 성공률 증가
+
+**💡 팁**: 첫 업로드에서 실패하더라도 포기하지 마세요. Agent가 학습 중입니다!
+
+---
+
 ## 🤝 기여
 
-이 프로젝트는 오픈소스이며, 개선 제안 및 기여를 환영합니다!
+이 프로젝트는 오픈소스이며, **개선 제안 및 기여를 환영합니다!** 🎉
 
 ### 기여 방법
 
@@ -240,7 +311,7 @@ Notion에 업로드해줘
 2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
 3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
 4. Push to the branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
+5. **Open a Pull Request** (PR 템플릿을 자동으로 제공합니다)
 
 ---
 
@@ -268,6 +339,20 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ---
 
 ## 📝 변경 이력
+
+### v2.1.4 (2026-01-14)
+
+- ✅ **README 대폭 개선**
+  - 프로젝트 배경 및 개발 철학 섹션 추가
+  - 사용 방법 명확화 (AI에게 모든 것을 맡기는 방식 강조)
+  - LLM 수준 기반 설계 철학 설명 추가
+- ✅ **PR 템플릿 추가**
+  - 상세한 문제 해결 과정 기록용 템플릿
+  - AI 프롬프트 작성 팁 포함
+  - MCP 도구 사용 체크리스트 추가
+- ✅ **부모 페이지 위치 검증 로직 강화**
+  - `01_실행_가이드.md`: API 성공 후 실제 위치 검증 단계 추가
+  - `02_코드_패턴.md`: `verifyPageUnderParent` 검증 함수 패턴 추가
 
 ### v2.1.3 (2026-01-14)
 
@@ -316,11 +401,11 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## 🧪 테스트 상태
 
 - ✅ **Cursor Pro**: 테스트 완료
-- ⏳ **Claude CLI**: 테스트 예정
+- ⏳ **Claude CLI**: 테스트 완료
 - ⏳ **Antigravity**: 테스트 예정
 
 ---
 
 **Made with ❤️ by 김준모**
 
-**Universal Notion Agent v2.1.3**
+**Universal Notion Agent v2.1.4**
