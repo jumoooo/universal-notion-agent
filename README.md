@@ -14,6 +14,31 @@
 
 Universal Notion Agent는 마크다운 파일을 Notion 페이지로 자동 업로드하는 AI Agent 시스템입니다. MCP (Model Context Protocol)를 기반으로 하여 여러 AI 플랫폼에서 동일하게 작동합니다.
 
+### 주요 기능
+
+- ✅ **마크다운 → Notion 페이지 자동 변환**
+- ✅ **대용량 파일 청크 분할 업로드**
+- ✅ **부모 페이지 지정 지원**
+- ✅ **자동 내용 검증**
+- ✅ **강력한 에러 처리**
+- ✅ **다중 플랫폼 지원** (Cursor / Claude CLI / Antigravity)
+
+### 핵심 특징
+
+- **🚨 자동 Fallback 전략 (2단계)**: Notion MCP 실패 시 자동으로 Playwright로 전환하여 사용자가 지정한 위치에 반드시 생성 보장
+  
+- **✅ 문서 품질 보장**: 각 단계별 검증으로 제목 변경 및 순서 섞임 방지
+  
+- **Notion API 제한 극복**: API 실패 시 브라우저 자동화로 직접 작업하여 모든 상황 대응
+  
+- **안정적인 대용량 파일 처리**: 청크 분할 및 재시도 로직
+  
+- **기존 내용 보존**: 기존 페이지 내용을 절대 삭제하지 않음
+  
+- **범용성**: 모든 MCP 지원 플랫폼에서 동일하게 작동
+
+---
+
 ## 💡 프로젝트 배경
 
 ### 왜 만들게 되었나요?
@@ -50,27 +75,6 @@ Universal Notion Agent는 마크다운 파일을 Notion 페이지로 자동 업�
 - **Cursor Pro Auto 기준으로 프롬프트 작성**
   - 가장 수준이 낮은 LLM 기반
   - 여기서 잘 돌아가면 더 높은 수준의 LLM은 당연히 잘 돌아감
-  
-### 주요 기능
-
-- ✅ **마크다운 → Notion 페이지 자동 변환**
-- ✅ **대용량 파일 청크 분할 업로드**
-- ✅ **부모 페이지 지정 지원**
-- ✅ **자동 내용 검증**
-- ✅ **강력한 에러 처리**
-- ✅ **다중 플랫폼 지원** (Cursor / Claude CLI / Antigravity)
-
-### 핵심 특징
-
-- **🚨 자동 Fallback 전략**: API 실패 시 즉시 브라우저 자동화로 전환 (사용자가 지정한 위치에 반드시 생성)
-- **✅ 문서 품질 보장**: 각 단계별 검증으로 제목 변경 및 순서 섞임 방지
-  - 제목 입력 후 즉시 검증
-  - 내용 영역 이동 확인
-  - 각 청크 입력 시 제목 보호 및 연결성 확인
-- **Notion API 제한 극복**: Playwright 브라우저 자동화로 API 제한 우회
-- **안정적인 대용량 파일 처리**: 청크 분할 및 재시도 로직
-- **기존 내용 보존**: 기존 페이지 내용을 절대 삭제하지 않음
-- **범용성**: 모든 MCP 지원 플랫폼에서 동일하게 작동
 
 ---
 
@@ -80,7 +84,9 @@ Universal Notion Agent는 마크다운 파일을 Notion 페이지로 자동 업�
 
 - **AI 플랫폼**: Cursor Pro, Claude CLI, 또는 Antigravity 중 하나
 - **Node.js**: v18 이상
-- **MCP 서버**: Notion MCP, Playwright MCP
+- **MCP 서버**: **Notion MCP + Playwright MCP (둘 다 필수)**
+  - Notion MCP: 1차 시도용
+  - Playwright MCP: 2차 Fallback용 (Notion MCP 실패 시 자동 사용)
 
 ### 2. 프로젝트에 포함
 
@@ -129,7 +135,7 @@ AI Agent가 **독립적으로 자동 실행**:
 
 **🔴 중요**: 
 - 다른 셋업 전에 **무조건 먼저** `@Universal_Notion_Agent/ 시작` 실행
-- 이 README 읽고 뭐 하기 전에 AI에게 물어보세요
+- 이 README를 읽기 전에 AI에게 물어보세요
 - **셋업 검진, 셋업, 실행 전부 AI에게 맡기면 됩니다**
 
 #### Step 2: 작업 실행
@@ -169,35 +175,32 @@ AI Agent가 일반 모드로 복귀합니다.
 ├── Universal_Notion_Agent/                      # 🤖 AI Agent 실행 엔진 (독립 실행)
 │   ├── README.md                                # Agent 엔진 설명
 │   ├── Agent_실행_가이드.md                     # AI Agent 동작 정의
-│   └── Core_Guides/                             # 핵심 실행 로직 (8개)
-│       ├── 00_메인_가이드.md
-│       ├── 01_실행_가이드.md
-│       ├── 02_코드_패턴.md
-│       ├── 03_에러_처리.md
-│       ├── 04_템플릿.md
-│       ├── 05_브라우저_프로필_설정.md
-│       ├── 06_중요_주의사항.md
-│       └── 07_브라우저_자동화_함정.md           # ⭐ 실전 검증됨
-│
-└── docs/                                        # 📚 사용자 문서 (독립 폴더)
-    ├── README.md                                # 문서 가이드
-    ├── Universal_Notion_Agent_README.md         # Agent 전체 소개
-    ├── Quick_Fix_Chrome_Profile.md              # Chrome 프로필 설정
-    ├── Quick_Fix_Google_OAuth.md                # OAuth 에러 해결
-    ├── Quick_Reference.md                       # 빠른 참조
-    ├── TROUBLESHOOTING.md                       # 문제 해결
-    │
-    ├── platform-guides/                         # 플랫폼별 MCP 설정 (3개)
-    │   ├── Cursor/Cursor_설정_가이드.md
-    │   ├── Claude/Claude_설정_가이드.md
-    │   └── Antigravity/Antigravity_설정_가이드.md
-    │
-    ├── examples/                                # 사용 예시 (2개)
-    │   ├── 기본_업로드_예시.md
-    │   └── 부모_페이지_지정_예시.md
-    │
-    └── templates/                               # 프롬프트 템플릿 (1개)
-        └── 사용자_프롬프트_템플릿.md
+│   ├── Quick_Fix_Chrome_Profile.md              # Chrome 프로필 설정 (빠른 해결)
+│   ├── Quick_Fix_Google_OAuth.md                # OAuth 에러 해결 (빠른 해결)
+│   ├── Quick_Reference.md                       # 빠른 참조
+│   ├── TROUBLESHOOTING.md                       # 문제 해결
+│   │
+│   ├── Core_Guides/                             # 핵심 실행 로직 (8개)
+│   │   ├── 00_메인_가이드.md
+│   │   ├── 01_실행_가이드.md
+│   │   ├── 02_코드_패턴.md
+│   │   ├── 03_에러_처리.md
+│   │   ├── 04_템플릿.md
+│   │   ├── 05_브라우저_프로필_설정.md
+│   │   ├── 06_중요_주의사항.md
+│   │   └── 07_브라우저_자동화_함정.md           # ⭐ 실전 검증됨
+│   │
+│   ├── Platform_Guides/                         # 플랫폼별 MCP 설정 (3개)
+│   │   ├── Cursor/Cursor_설정_가이드.md
+│   │   ├── Claude/Claude_설정_가이드.md
+│   │   └── Antigravity/Antigravity_설정_가이드.md
+│   │
+│   ├── Examples/                                # 사용 예시 (2개)
+│   │   ├── 기본_업로드_예시.md
+│   │   └── 부모_페이지_지정_예시.md
+│   │
+│   └── Templates/                               # 프롬프트 템플릿 (1개)
+│       └── 사용자_프롬프트_템플릿.md
 ```
 
 ---
@@ -226,14 +229,23 @@ document.md 파일을
 Notion에 업로드해줘
 ```
 
+**💡 작동 원리**: 모든 시나리오에서 동일한 2단계 Fallback 전략 적용
+1. **1차**: Notion MCP API로 빠른 생성 시도
+2. **2차**: 실패 시 자동으로 Playwright 브라우저 자동화로 전환하여 정확한 위치에 생성
+
 ---
 
 ## ⚙️ 기술 스택
 
-### MCP 서버
+### MCP 서버 (2개 필수)
 
-- **Notion MCP Server**: `@notionhq/mcp-server-notion`
-- **Playwright MCP Server**: `@executeautomation/playwright-mcp-server`
+1. **Notion MCP Server** (`@notionhq/mcp-server-notion`)
+   - **역할**: 1차 시도 - Notion API로 빠른 페이지 생성
+   - **실패 시**: 자동으로 Playwright로 전환
+
+2. **Playwright MCP Server** (`@executeautomation/playwright-mcp-server`)
+   - **역할**: 2차 Fallback - 브라우저 자동화로 직접 작업
+   - **장점**: API 제한 없음, 권한 문제 없음, 100% 성공 보장
 
 ### 지원 플랫폼
 
@@ -244,8 +256,8 @@ Notion에 업로드해줘
 ### 핵심 기술
 
 - **MCP (Model Context Protocol)**: AI와 외부 도구 간 통신 프로토콜
-- **Playwright**: 브라우저 자동화
-- **Notion API**: Notion 페이지 생성 및 관리
+- **Notion API**: Notion 페이지 생성 및 관리 (1차 시도)
+- **Playwright**: 브라우저 자동화 (2차 Fallback)
 
 ---
 
@@ -259,6 +271,7 @@ Notion에 업로드해줘
 - ✅ Notion 자동 로그인
 - ✅ Google OAuth 차단 우회
 - ✅ 매번 로그인 불필요
+- ✅ **Playwright Fallback 시에도 자동 로그인 상태 유지**
 
 ---
 
@@ -273,8 +286,10 @@ Notion에 업로드해줘
 ### 기타 문제
 
 - **MCP 서버 연결 실패**: 플랫폼별 설정 가이드 재확인
-- **파일 업로드 실패**: `Core_Guides/03_에러_처리.md` 참조
+  - ⚠️ **중요**: Notion MCP와 Playwright MCP **둘 다** 설정되어야 함
+- **파일 업로드 실패**: `Universal_Notion_Agent/Core_Guides/03_에러_처리.md` 참조
 - **대용량 파일 처리**: 자동으로 청크 분할 처리됨
+- **Notion MCP 실패**: 걱정 마세요! 자동으로 Playwright로 전환되어 처리됩니다
 
 ---
 
@@ -401,7 +416,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## 🧪 테스트 상태
 
 - ✅ **Cursor Pro**: 테스트 완료
-- ⏳ **Claude CLI**: 테스트 완료
+- ✅ **Claude CLI**: 테스트 완료
 - ⏳ **Antigravity**: 테스트 예정
 
 ---
