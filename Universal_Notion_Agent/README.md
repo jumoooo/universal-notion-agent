@@ -164,4 +164,4 @@ document.md 파일을 Notion에 업로드해줘
 
 ---
 
-**Universal Notion Agent v2.1.2**
+**Universal Notion Agent v2.1.3**

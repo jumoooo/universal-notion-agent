@@ -269,6 +269,13 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 📝 변경 이력
 
+### v2.1.3 (2026-01-14)
+
+- ✅ **Core Guides 문서 업데이트**
+  - `01_실행_가이드.md`: 실행 절차 및 검증 단계 상세화
+  - `02_코드_패턴.md`: 코드 패턴 및 함수 예시 추가
+- ✅ 문서 품질 개선 및 가이드 보완
+
 ### v2.1.2 (2026-01-13)
 
 - ✅ **실전 검증된 브라우저 자동화 함정 가이드 추가** (`07_브라우저_자동화_함정.md`)
@@ -316,4 +323,4 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 **Made with ❤️ by 김준모**
 
-**Universal Notion Agent v2.1.2**
+**Universal Notion Agent v2.1.3**
