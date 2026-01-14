@@ -1,6 +1,8 @@
 # ⚙️ Claude CLI (claude-code)용 Notion Agent 설정 가이드
 
 > 💡 **Claude CLI 전용**: Anthropic의 공식 CLI 도구 `claude-code`에서 범용 Notion Agent를 사용하기 위한 설정 가이드
+>
+> ✅ **검증 완료**: 2026-01-13 실제 업로드 성공 사례 기반
 
 ## 📋 TL;DR (핵심 요약)
 
@@ -9,8 +11,14 @@
 **필수 사항**:
 
 1. `claude-code` CLI 도구 설치
-2. MCP 서버 설정 (Notion + Playwright)
-3. Notion 계정 연동
+2. **프로젝트별 `.mcp.json` 파일 설정** (권장)
+3. **Chrome 프로필 설정** (Google OAuth 차단 우회 필수)
+4. Notion 수동 로그인
+
+**핵심 성공 패턴**:
+- macOS: `pbcopy`로 시스템 클립보드에 복사 → `Meta+v`로 붙여넣기
+- 청크 분할 없이 **한 번에 전체 업로드**
+- 페이지 문제 시 **새 페이지 생성 후 업로드**
 
 ---
 
@@ -44,44 +52,15 @@ claude --help
 
 ---
 
-## 🔌 2단계: MCP 서버 설정
+## 🔌 2단계: MCP 서버 설정 (프로젝트별 .mcp.json)
 
-### 2-1. claude-code 설정 모드 진입
+### ⚠️ 중요: 프로젝트별 설정 권장
 
-```bash
-# claude-code 실행
-claude
+Claude CLI에서는 **프로젝트 루트에 `.mcp.json` 파일을 생성**하는 것이 가장 안정적입니다.
 
-# 설정 모드 진입
-/config
-```
+### 2-1. `.mcp.json` 파일 생성
 
-### 2-2. 설정 파일 위치
-
-**자동 생성되는 설정 파일**:
-
-- macOS/Linux: `~/.claude/config.json`
-- Windows: `%USERPROFILE%\.claude\config.json`
-
-### 2-3. MCP 서버 설정 추가
-
-**방법 1: CLI 내부 명령어 사용** (권장):
-
-```bash
-# claude-code 실행 후
-claude
-
-# MCP 서버 추가
-/config add-mcp notion npx -y @notionhq/mcp-server-notion
-/config add-mcp playwright npx -y @executeautomation/playwright-mcp-server
-
-# 설정 확인
-/config list
-```
-
-**방법 2: 설정 파일 직접 편집**:
-
-`~/.claude/config.json` 파일을 직접 편집:
+프로젝트 루트 디렉토리에 `.mcp.json` 파일 생성:
 
 ```json
 {
@@ -92,44 +71,94 @@ claude
     },
     "playwright": {
       "command": "npx",
-      "args": ["-y", "@executeautomation/playwright-mcp-server"]
+      "args": [
+        "-y",
+        "@playwright/mcp",
+        "--browser=chromium",
+        "--user-data-dir=/Users/[사용자명]/Library/Application Support/Google/Chrome/NotionAgent"
+      ]
     }
   }
 }
 ```
 
+### 2-2. Chrome 프로필 경로 설정 (OS별)
+
+**macOS**:
+```json
+"--user-data-dir=/Users/[사용자명]/Library/Application Support/Google/Chrome/NotionAgent"
+```
+
+**Windows**:
+```json
+"--user-data-dir=C:\\Users\\[사용자명]\\AppData\\Local\\Google\\Chrome\\User Data\\NotionAgent"
+```
+
+**Linux**:
+```json
+"--user-data-dir=/home/[사용자명]/.config/google-chrome/NotionAgent"
+```
+
+### 2-3. 설정 확인
+
+```bash
+# 프로젝트 디렉토리에서 claude 실행
+cd /path/to/your/project
+claude
+
+# MCP 서버 확인 (claude 내부에서)
+# 자동으로 .mcp.json 파일의 MCP 서버들이 로드됨
+```
+
 ---
 
-## 🔐 3단계: Notion 계정 연동
+## 🔐 3단계: Chrome 프로필 설정 (필수!)
 
-### 3-1. Notion 로그인
+### ⚠️ 왜 필요한가?
 
-1. `claude` 명령어로 Claude CLI 실행
-2. 다음 프롬프트 입력:
+Playwright가 새 브라우저 인스턴스를 열면 **로그인 상태가 유지되지 않음**.
+Google OAuth는 자동화된 브라우저를 차단함.
+
+**해결책**: 전용 Chrome 프로필을 만들어 **수동으로 Notion에 로그인**해두면, Playwright가 해당 프로필을 사용하여 로그인 상태 유지.
+
+### 3-1. Chrome 프로필 디렉토리 생성
+
+```bash
+# macOS
+mkdir -p "/Users/$(whoami)/Library/Application Support/Google/Chrome/NotionAgent"
+
+# Windows (PowerShell)
+New-Item -ItemType Directory -Path "$env:LOCALAPPDATA\Google\Chrome\User Data\NotionAgent" -Force
+
+# Linux
+mkdir -p ~/.config/google-chrome/NotionAgent
+```
+
+### 3-2. 수동 로그인 (최초 1회)
+
+Claude CLI에서 다음 명령 실행:
 
 ```
-Notion MCP 연결 상태 확인해줘
+브라우저 열고 https://www.notion.so 로 이동해줘
 ```
 
-3. 터미널에 OAuth URL이 표시되면 브라우저에서 열기
-4. Notion 계정으로 로그인
-5. 권한 승인
-6. 인증 토큰이 자동으로 저장됨
+또는 직접:
+```bash
+# macOS
+"/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" --user-data-dir="/Users/$(whoami)/Library/Application Support/Google/Chrome/NotionAgent" https://www.notion.so
+```
 
-### 3-2. 권한 설정
+**수동으로 Notion에 로그인** (Google OAuth 또는 이메일)
 
-**필요한 권한**:
+### 3-3. 로그인 유지 확인
 
-- 페이지 읽기
-- 페이지 쓰기
-- 페이지 생성
-- 페이지 이동
-
-**확인 방법**:
+로그인 후 Claude CLI에서:
 
 ```
-Notion API 권한 확인해줘
+브라우저 스냅샷 찍어줘
 ```
+
+사이드바에 워크스페이스 이름이 보이면 성공!
 
 ---
 
@@ -139,202 +168,215 @@ Notion API 권한 확인해줘
 
 1. **MCP 서버 연결 확인**:
 
-```
-MCP 서버 상태 확인해줘
-```
+Claude CLI 실행 후 다음 도구들이 사용 가능한지 확인:
+- `mcp__playwright__browser_navigate`
+- `mcp__playwright__browser_snapshot`
+- `mcp__playwright__browser_click`
 
-2. **Notion API 연결 확인**:
-
-```
-Notion 워크스페이스 정보 가져와줘
-```
-
-3. **브라우저 자동화 확인**:
+2. **브라우저 자동화 확인**:
 
 ```
-브라우저 열고 notion.so로 이동해줘
+브라우저 열고 notion.so로 이동해서 스냅샷 찍어줘
 ```
+
+3. **Notion 로그인 상태 확인**:
+
+스냅샷에서 사이드바에 워크스페이스 이름(예: "일의 Notion")이 보이면 성공
 
 ### 성공 조건
 
-- ✅ Notion API 연결 성공
-- ✅ 브라우저 자동화 연결 성공
-- ✅ Notion 로그인 상태 유지
+- ✅ Playwright MCP 서버 연결 성공
+- ✅ Chrome 프로필로 브라우저 열림
+- ✅ Notion 로그인 상태 유지됨
+- ✅ 사이드바에서 페이지 목록 확인 가능
 
 ---
 
-## 🎯 5단계: 범용 가이드 참조 설정
+## 🎯 5단계: 업로드 실행
 
-### Claude CLI에서 가이드 참조 방법
+### 권장 프롬프트 형식
 
-**방법 1: 파일 경로 직접 지정** (권장):
+```
+@Universal_Notion_Agent/ 실행
 
-```bash
-claude
-
-# 프롬프트
-Universal_Notion_Agent/Core_Guides/00_메인_가이드.md 파일을 읽고,
-그 가이드를 따라 [파일명].md 파일을 Notion에 업로드해줘
+[파일명].md 파일을 Notion의 "[부모 페이지명]" 페이지에 업로드해줘
 ```
 
-**방법 2: 작업 디렉토리 설정**:
+### 실제 성공 예제
 
-```bash
-# 프로젝트 디렉토리로 이동
-cd E:\hanghae99\my\Notion_Agent
-
-# claude 실행
-claude
-
-# 프롬프트 (상대 경로 사용 가능)
-./Universal_Notion_Agent/Core_Guides/00_메인_가이드.md 를 참조하여
-노션_셋업_가이드.md 파일을 Notion에 업로드해줘
 ```
+@Universal_Notion_Agent/ 실행
 
-**방법 3: 가이드 내용 직접 제공**:
-
-```bash
-claude
-
-# 프롬프트
-다음 가이드를 따라 작업해줘:
-[가이드 내용 붙여넣기]
-
-그리고 [파일명].md 파일을 Notion에 업로드해줘
+ROADMAP.md 파일을 Notion의 "개인 페이지"에 업로드해줘
 ```
 
 ---
 
-## 🔧 문제 해결
+## 🔧 문제 해결 (Claude CLI 전용)
 
-### MCP 서버 연결 실패
+### 문제 1: Google OAuth 차단
 
-**증상**: "MCP server not found" 에러
-
-**해결**:
-
-1. claude-code 재시작:
-
-```bash
-# 현재 세션 종료 (Ctrl+C 또는 /exit)
-# 다시 시작
-claude
-```
-
-2. 설정 파일 확인:
-
-```bash
-cat ~/.claude/config.json
-# 또는
-type %USERPROFILE%\.claude\config.json
-```
-
-3. Node.js 버전 확인:
-
-```bash
-node -v
-# v18 이상이어야 함
-```
-
-4. MCP 서버 수동 실행 테스트:
-
-```bash
-npx -y @notionhq/mcp-server-notion
-# 정상 작동 확인
-```
-
-5. 설정 재설정:
-
-```bash
-claude
-/config reset
-/config add-mcp notion npx -y @notionhq/mcp-server-notion
-```
-
-### Notion 로그인 실패
-
-**증상**: Notion 로그인 페이지가 열리지 않음
+**증상**:
+- "Sign in with Google temporarily disabled for this app"
+- 로그인 페이지가 반복됨
 
 **해결**:
+1. Chrome 프로필 경로 확인 (`.mcp.json`의 `--user-data-dir`)
+2. 해당 프로필로 Chrome 직접 실행하여 수동 로그인
+3. Claude CLI 재시작
 
-1. 브라우저 쿠키 및 캐시 삭제
-2. Notion에 직접 로그인 후 재시도
-3. 다른 브라우저 사용
-4. Claude Desktop 재시작
+```bash
+# macOS - Chrome 프로필로 직접 열기
+"/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" \
+  --user-data-dir="/Users/$(whoami)/Library/Application Support/Google/Chrome/NotionAgent" \
+  https://www.notion.so
+```
 
-### 브라우저 자동화 실패
+### 문제 2: 내용 순서가 뒤바뀜
 
-**증상**: "Browser automation failed" 에러
+**증상**:
+- Phase 4 → 3 → 2 → 1 순서로 역순 표시
+- 청크 업로드 시 순서 문제
 
 **해결**:
-
-1. Playwright 브라우저 설치:
-
-```bash
-npx playwright install chromium
-```
-
-2. claude-code 재시작
-3. 시스템 권한 확인 (방화벽, 보안 프로그램)
-4. Playwright 수동 테스트:
+- **청크 분할 대신 한 번에 전체 업로드** (권장)
+- macOS에서 `pbcopy` 활용:
 
 ```bash
-npx playwright test
+# 시스템 클립보드에 파일 내용 복사
+pbcopy < /path/to/file.md
 ```
 
-### Anthropic API 키 설정
+그리고 `browser_run_code`로 `Meta+v` 붙여넣기
 
-**증상**: "API key not found" 에러
+### 문제 3: 내용이 삭제되지 않음 (Undo 복원)
+
+**증상**:
+- `Meta+A` + `Backspace`로 삭제해도 내용이 다시 나타남
+- Notion의 Undo 기능이 자동 실행됨
 
 **해결**:
+- 기존 페이지 정리 대신 **새 페이지 생성 후 업로드**
+- 문제 페이지는 휴지통으로 이동
 
-1. API 키 설정:
+### 문제 4: 제목이 "새 페이지"로 변경됨
 
-```bash
-# 환경 변수로 설정
-export ANTHROPIC_API_KEY="your-api-key-here"
+**증상**:
+- 붙여넣기 후 제목이 "새 페이지"로 바뀜
+- 제목 영역이 덮어쓰기됨
 
-# 또는 claude-code 설정에 추가
-claude
-/config set api-key your-api-key-here
+**해결**:
+- 붙여넣기 후 **즉시 제목 검증 및 복구**:
+
+```javascript
+// browser_evaluate 순수 함수로 제목 복구
+() => {
+  const titleElement = document.querySelector('h1[contenteditable="true"]');
+  titleElement.focus();
+  const range = document.createRange();
+  range.selectNodeContents(titleElement);
+  const selection = window.getSelection();
+  selection.removeAllRanges();
+  selection.addRange(range);
+  document.execCommand('insertText', false, '원하는 제목');
+  return { success: true };
+}
 ```
 
-2. API 키 확인:
+### 문제 5: browser_click 타임아웃
 
-```bash
-claude
-/config show
+**증상**:
+- "TimeoutError: locator.click: Timeout 5000ms exceeded"
+- "div intercepts pointer events"
+
+**해결**:
+- `browser_click` 대신 **JavaScript 직접 클릭** 사용:
+
+```javascript
+// browser_evaluate로 직접 클릭
+() => {
+  const button = document.querySelector('[aria-label="삭제, 복제 등…"]');
+  if (button) {
+    button.click();
+    return { success: true };
+  }
+  return { success: false };
+}
 ```
 
 ---
 
-## 📝 Claude CLI 특수 사항
+## 📝 Claude CLI 성공 패턴
 
-### CLI 환경의 브라우저 자동화
+### ✅ 검증된 업로드 워크플로우
 
-Claude CLI 환경에서는 GUI 기반 브라우저 자동화가 제한될 수 있습니다.
+```
+1. Chrome 프로필 설정 완료 (수동 Notion 로그인)
+   ↓
+2. Claude CLI에서 브라우저 열기
+   ↓
+3. 대상 페이지로 이동 (navigate)
+   ↓
+4. 새 페이지 생성 (사이드바 "새 페이지" 버튼)
+   ↓
+5. 제목 입력 (browser_type)
+   ↓
+6. 제목 검증 (browser_evaluate 순수 함수)
+   ↓
+7. Enter로 내용 영역 이동
+   ↓
+8. pbcopy로 파일 내용 클립보드 복사 (Bash)
+   ↓
+9. Meta+v로 붙여넣기 (browser_run_code)
+   ↓
+10. 최종 검증 (순서, 내용 확인)
+```
 
-**대안**:
-
-1. **Headless 모드 사용**: Playwright를 headless 모드로 실행
-2. **스크린샷 활용**: 브라우저 상태를 스크린샷으로 확인
-3. **로그 확인**: 터미널에서 상세한 실행 로그 확인
-
-### 터미널 기반 워크플로우
+### ✅ macOS 클립보드 활용 패턴 (권장)
 
 ```bash
-# 1. 프로젝트 디렉토리로 이동
-cd E:\hanghae99\my\Notion_Agent
-
-# 2. claude-code 실행
-claude
-
-# 3. 가이드 참조하여 작업 요청
-Universal_Notion_Agent/Core_Guides/00_메인_가이드.md 를 참조하여
-노션_셋업_가이드.md 를 Notion에 업로드해줘
-
-# 4. 진행 상황 터미널에서 확인
+# 1. Bash로 시스템 클립보드에 복사
+pbcopy < /path/to/file.md
 ```
+
+```javascript
+// 2. browser_run_code로 붙여넣기
+async (page) => {
+  await page.keyboard.press('Meta+v');
+  await page.waitForTimeout(10000); // 대용량 파일은 충분히 대기
+  return { success: true };
+}
+```
+
+### ✅ 제목 검증 패턴 (순수 함수)
+
+```javascript
+// browser_evaluate - 반드시 순수 함수만!
+() => {
+  const expectedTitle = '원하는 제목'; // 함수 내부에서 정의
+  const titleElement = document.querySelector('h1[contenteditable="true"]');
+  const actualTitle = titleElement?.innerText.trim();
+
+  return {
+    success: actualTitle === expectedTitle,
+    expected: expectedTitle,
+    actual: actualTitle
+  };
+}
+```
+
+### ❌ 절대 하지 말 것
+
+1. **browser_evaluate에 element/ref 파라미터 사용 금지**
+   - 제목이 `[object HTMLDivElement]`로 오염됨
+
+2. **청크 분할 업로드 피하기**
+   - 순서 역전, 중복 발생 가능
+   - 대신 `pbcopy` + 한 번에 붙여넣기
+
+3. **기존 내용 삭제 시도 피하기**
+   - Notion Undo가 복원함
+   - 대신 새 페이지 생성
 
 ---
 
@@ -346,7 +388,7 @@ Universal_Notion_Agent/Core_Guides/00_메인_가이드.md 를 참조하여
 - **실행 가이드**: `../../Core_Guides/01_실행_가이드.md`
 - **코드 패턴**: `../../Core_Guides/02_코드_패턴.md`
 - **에러 처리**: `../../Core_Guides/03_에러_처리.md`
-- **템플릿**: `../../Core_Guides/04_템플릿.md`
+- **브라우저 자동화 함정**: `../../Core_Guides/07_브라우저_자동화_함정.md`
 
 ### Claude 공식 문서
 
@@ -362,6 +404,6 @@ Universal_Notion_Agent/Core_Guides/00_메인_가이드.md 를 참조하여
 
 ## 📝 출처
 
-**작성자**: 김준모  
-**이메일**: rnsdlsdmtlk@gmail.com  
-**버전**: 2.0.0 (Claude CLI Platform)
+**작성자**: 김준모
+**이메일**: rnsdlsdmtlk@gmail.com
+**버전**: 2.1.0 (Claude CLI Platform - 2026-01-13 성공 사례 반영)
