@@ -417,7 +417,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 - ✅ **Cursor Pro**: 테스트 완료
 - ✅ **Claude CLI**: 테스트 완료
-- ⏳ **Antigravity**: 테스트 예정
+- ⏳ **Antigravity**: 테스트 완료
 
 ---
 
